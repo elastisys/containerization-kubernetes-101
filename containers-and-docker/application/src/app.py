@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-   return 'Flask running in a container as {}!'.format(socket.gethostname())
+   return 'Flask running in a container as {}!\n'.format(socket.gethostname())
 
 
 @app.route('/crash')
