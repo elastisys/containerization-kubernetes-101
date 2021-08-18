@@ -11,12 +11,15 @@ RUN useradd -ms /bin/bash runner
 # Now make the user be "runner"
 USER runner
 
-# Copy all source code to /app
-COPY src/ /app
+# Copy the file listing the dependencies
+COPY src/requirements.txt /app
 
 # Install all requirements as specified by the requirements.txt file
 # on the container image
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy all source code to /app now that we have the dependencies
+COPY src/ /app
 
 # Add metadata that this container will want to open port 5000
 EXPOSE 5000
