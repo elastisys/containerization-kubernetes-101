@@ -1,0 +1,93 @@
+# This file actually has two Kubernetes resource definitions in it.
+# First, the Deployment, which specifies how the application is
+# deployed. Second, the Service, which exposes it via ClusterIP
+# internally in the cluster.
+#
+# The standard way of putting logically separate YAML files into one
+# (--- on its own line) is used to do this.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: simple-application
+  name: simple-application
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simple-application
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: simple-application
+    spec:
+      # Section showcasing a Pod-level security configuration
+      #
+      # Because it is placed here in the file, rather than below a particular
+      # container, settings here apply to all containers in the Pod.
+      # Here, we disallow access to host resources that can be security 
+      # risks.
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
+
+      containers:
+      - image: llarsson/containers-and-docker:0.0.2
+        name: containers-and-docker
+        ports:
+        - containerPort: 5000
+        resources: {}
+
+        # Section showcasing configuration via ConfigMap
+        #
+        # Takes a value from a ConfigMap and injects it into the environment
+        # variables of the containerized application
+        env:
+          # FLASK_ENV controls how the Python Flask server operates, see also:
+          # https://flask.palletsprojects.com/en/2.0.x/server/
+          - name: FLASK_ENV
+            valueFrom:
+              configMapKeyRef:
+                name: configuration # the name of the ConfigMap
+                key: mode           # the key within the ConfigMap
+
+        # Per-container security context section
+        #
+        # Makes sure to explicitly state that this is not a privileged 
+        # process, that it cannot turn into one, and that it intentionally
+        # requests to be limited in what it can do, capability-wise.
+        # See also:
+        #
+        # https://kubernetes.io/docs/concepts/security/pod-security-standards/
+        securityContext:
+          privileged: false
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
+          capabilities:
+            drop: 
+              - ALL
+            add: 
+              - NET_BIND_SERVICE # allow listening to network calls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: simple-application
+  name: simple-application
+spec:
+  ports:
+  - port: 5000
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: simple-application
+  type: ClusterIP
