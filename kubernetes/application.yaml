@@ -62,6 +62,34 @@ spec:
                 name: configuration # the name of the ConfigMap
                 key: mode           # the key within the ConfigMap
 
+        # Probes
+        # 
+        # Startup: when the probe returns success, the container can
+        # be regarded as started.
+        startupProbe:
+          tcpSocket:
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        #
+        # Readiness: as long as the probe returns success, the container
+        # can serve traffic, and may be the Endpoint of a Service.
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        #
+        # Liveness: failure signals to Kubernetes that the container
+        # must be restarted.
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 3
+          periodSeconds: 3
+
         # Per-container security context section
         #
         # Makes sure to explicitly state that this is not a privileged 
